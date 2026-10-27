@@ -1,0 +1,26 @@
+name: form_saathi
+description: "Form Saathi - get your government paperwork right the first time."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.6.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2        # pick a photo from gallery or camera
+  image: ^4.2.0               # resize, crop and compress images (pure Dart)
+  path_provider: ^2.1.4       # temporary folder for saving files
+  shared_preferences: ^2.3.2  # stores your documents list on the phone
+  gal: ^2.3.0                 # saves images to the phone gallery
+  share_plus: ^10.1.4         # share sheet (WhatsApp, Drive, etc.)
+  url_launcher: ^6.3.1        # opens official websites and Google Calendar
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

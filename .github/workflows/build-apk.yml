@@ -1,0 +1,59 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write # needed to publish the APK as a Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # The repo only holds our own files. This adds the standard Android
+      # project files Flutter needs, without overwriting ours.
+      - name: Add missing Flutter platform files
+        run: flutter create --org com.formsaathi --project-name form_saathi --platforms android .
+
+      - run: flutter pub get
+
+      - name: Check code (report only)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      - run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk FormSaathi.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FormSaathi-apk
+          path: FormSaathi.apk
+
+      # Puts the APK on the repo's Releases page so it can be downloaded
+      # straight onto a phone.
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Form Saathi test build ${{ github.run_number }}
+          body: Test build. Download FormSaathi.apk on your Android phone and tap it to install.
+          files: FormSaathi.apk
+          prerelease: true
