@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/checklists.dart';
+import '../l10n/lang.dart';
+import '../l10n/strings.dart';
 import '../services/storage.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -11,7 +13,7 @@ class ChecklistsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Checklists · ज़रूरी कागज़')),
+      appBar: AppBar(title: Text(tr(S.checklistsTitle))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: [
@@ -21,8 +23,8 @@ class ChecklistsScreen extends StatelessWidget {
               child: Card(
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  title: Text('${c.titleHi} · ${c.titleEn}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                  subtitle: Text('${c.items.length} items'),
+                  title: Text(tr(c.title), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text('${c.items.length} ${tr(S.itemsWord)}'),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context)
                       .push(MaterialPageRoute(builder: (_) => ChecklistDetailScreen(checklist: c))),
@@ -65,23 +67,23 @@ class _ChecklistDetailScreenState extends State<ChecklistDetailScreen> {
   Widget build(BuildContext context) {
     final c = widget.checklist;
     final total = c.items.length;
-    final ready = _done.length;
+    final ready = _done.where((i) => i < total).length;
 
     return Scaffold(
-      appBar: AppBar(title: Text(c.titleEn)),
+      appBar: AppBar(title: Text(tr(c.title))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
         children: [
-          Text('${c.titleHi} · ${c.titleEn}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-          Text(c.subtitle, style: const TextStyle(fontSize: 15, color: AppColors.muted)),
+          Text(tr(c.title), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+          Text(tr(c.subtitle), style: const TextStyle(fontSize: 15, color: AppColors.muted)),
           const SizedBox(height: 14),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(children: [
                 Row(children: [
-                  const Expanded(child: Text('Ready', style: TextStyle(fontWeight: FontWeight.w700))),
-                  Text('$ready of $total', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Expanded(child: Text(tr(S.ready), style: const TextStyle(fontWeight: FontWeight.w700))),
+                  Text('$ready ${tr(S.ofWord)} $total', style: const TextStyle(fontWeight: FontWeight.w700)),
                 ]),
                 const SizedBox(height: 8),
                 ClipRRect(
@@ -106,19 +108,18 @@ class _ChecklistDetailScreenState extends State<ChecklistDetailScreen> {
                   onChanged: (_) => _toggle(i),
                   activeColor: AppColors.green,
                   controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(c.items[i].title,
+                  title: Text(tr(c.items[i].title),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         decoration: _done.contains(i) ? TextDecoration.lineThrough : null,
                         color: _done.contains(i) ? AppColors.greenText : AppColors.ink,
                       )),
-                  subtitle: Text(c.items[i].note),
+                  subtitle: Text(tr(c.items[i].note)),
                 ),
               ),
             ),
           const SizedBox(height: 8),
-          Text('Rules can change. Confirm on ${c.officialSite} before you go.',
-              style: const TextStyle(fontSize: 12, color: AppColors.muted)),
+          Text('${tr(S.rulesChange)} ${tr(c.officialSite)}', style: const TextStyle(fontSize: 12, color: AppColors.muted)),
         ],
       ),
     );

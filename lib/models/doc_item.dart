@@ -1,7 +1,9 @@
+import '../l10n/lang.dart';
+
 /// One document the user wants to be reminded about (DL, PUC, passport...).
 class DocItem {
   final String id;
-  final String type; // e.g. "PUC Certificate"
+  final String type; // stored key, always English, e.g. "PUC Certificate"
   final String label; // optional, e.g. vehicle number "HR06AB1234"
   final DateTime expiry;
 
@@ -28,6 +30,9 @@ class DocItem {
     return DocStatus.ok;
   }
 
+  /// The document name in the chosen language.
+  String get typeName => docTypeName(type);
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'type': type,
@@ -45,32 +50,42 @@ class DocItem {
 
 enum DocStatus { urgent, soon, ok }
 
-const docTypes = <String>[
-  'Driving Licence',
-  'Vehicle RC',
-  'PUC Certificate',
-  'Vehicle Insurance',
-  'Passport',
-  'FASTag KYC',
-  'Health Insurance',
-  'Other',
-];
+/// Stored keys (English) and their display names.
+const docTypeNames = <String, L>{
+  'Driving Licence': L('Driving Licence', 'ड्राइविंग लाइसेंस'),
+  'Vehicle RC': L('Vehicle RC', 'वाहन RC'),
+  'PUC Certificate': L('PUC Certificate', 'PUC प्रमाणपत्र'),
+  'Vehicle Insurance': L('Vehicle Insurance', 'वाहन बीमा'),
+  'Passport': L('Passport', 'पासपोर्ट'),
+  'Visa': L('Visa', 'वीज़ा'),
+  'FASTag KYC': L('FASTag KYC', 'FASTag KYC'),
+  'Health Insurance': L('Health Insurance', 'स्वास्थ्य बीमा'),
+  'Other': L('Other', 'अन्य'),
+};
 
-/// "31 Oct 2026"
+List<String> get docTypes => docTypeNames.keys.toList();
+
+String docTypeName(String key) => docTypeNames[key]?.text ?? key;
+
+/// "31 Oct 2026" / "31 अक्टू 2026"
 String formatDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-  return '${d.day.toString().padLeft(2, '0')} ${months[d.month - 1]} ${d.year}';
+  const en = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const hi = ['जन', 'फर', 'मार्च', 'अप्रै', 'मई', 'जून', 'जुला', 'अग', 'सितं', 'अक्टू', 'नवं', 'दिसं'];
+  final m = LangController.instance.isHindi ? hi : en;
+  return '${d.day.toString().padLeft(2, '0')} ${m[d.month - 1]} ${d.year}';
 }
 
-/// "6 days", "3 months", "2.4 yrs", "Expired 3 days ago"
+/// "6 days", "3 months", "2.4 yrs" (or the Hindi version).
 String formatDaysLeft(int days) {
-  if (days < 0) return 'Expired';
-  if (days == 0) return 'Today';
-  if (days == 1) return '1 day';
-  if (days < 60) return '$days days';
-  if (days < 365) return '${(days / 30).round()} months';
-  return '${(days / 365).toStringAsFixed(1)} yrs';
+  final hi = LangController.instance.isHindi;
+  if (days < 0) return hi ? 'खत्म' : 'Expired';
+  if (days == 0) return hi ? 'आज' : 'Today';
+  if (days == 1) return hi ? '1 दिन' : '1 day';
+  if (days < 60) return hi ? '$days दिन' : '$days days';
+  if (days < 365) {
+    final m = (days / 30).round();
+    return hi ? '$m महीने' : '$m months';
+  }
+  final y = (days / 365).toStringAsFixed(1);
+  return hi ? '$y साल' : '$y yrs';
 }

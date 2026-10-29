@@ -5,12 +5,14 @@ import 'package:image/image.dart' as img;
 
 import '../models/exam_preset.dart';
 
+enum ProcessError { unreadable, tooBig }
+
 class ProcessResult {
   final Uint8List? bytes; // the final JPG, null if something failed
   final bool fits; // true if size is inside the KB range
-  final String message;
+  final ProcessError? error; // why it failed, if it failed
 
-  const ProcessResult({this.bytes, required this.fits, required this.message});
+  const ProcessResult({this.bytes, required this.fits, this.error});
 
   int get sizeKb => bytes == null ? 0 : (bytes!.length / 1024).ceil();
 }
@@ -34,8 +36,7 @@ ProcessResult _process(
     Uint8List input, SizeSpec spec, bool isSignature, String? stampText) {
   final decoded = img.decodeImage(input);
   if (decoded == null) {
-    return const ProcessResult(
-        fits: false, message: 'Could not read this image. Try a JPG or PNG.');
+    return const ProcessResult(fits: false, error: ProcessError.unreadable);
   }
 
   // 1. Fix phone rotation and shrink huge camera photos (faster, same result).
@@ -160,26 +161,15 @@ ProcessResult _compressToRange(img.Image canvas, SizeSpec spec) {
     if (smallest.length <= maxBytes) best = smallest;
   }
   if (best == null) {
-    return ProcessResult(
-      fits: false,
-      message: 'Could not get under ${spec.maxKb} KB at '
-          '${spec.width}×${spec.height}. Check the size numbers.',
-    );
+    return const ProcessResult(fits: false, error: ProcessError.tooBig);
   }
 
   if (best.length < minBytes) {
     best = _padJpeg(best, minBytes);
   }
 
-  final kb = (best.length / 1024).ceil();
   final ok = best.length <= maxBytes && best.length >= minBytes;
-  return ProcessResult(
-    bytes: best,
-    fits: ok,
-    message: ok
-        ? '$kb KB · fits ${spec.minKb}–${spec.maxKb} KB'
-        : '$kb KB · outside ${spec.minKb}–${spec.maxKb} KB',
-  );
+  return ProcessResult(bytes: best, fits: ok);
 }
 
 /// Adds a JPG "comment" block right after the file header. Image viewers

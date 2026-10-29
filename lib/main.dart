@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import 'l10n/lang.dart';
+import 'l10n/strings.dart';
 import 'screens/guides_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/language_screen.dart';
 import 'screens/photo_tool_screen.dart';
 import 'screens/reminders_screen.dart';
 import 'services/storage.dart';
@@ -9,7 +12,8 @@ import 'theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await DocStore.instance.load(); // read saved documents before showing UI
+  await LangController.instance.load(); // saved language (or none yet)
+  await DocStore.instance.load(); // saved documents
   runApp(const FormSaathiApp());
 }
 
@@ -18,11 +22,20 @@ class FormSaathiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Form Saathi',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      home: const RootShell(),
+    // Rebuild the whole app when the language changes.
+    return ListenableBuilder(
+      listenable: LangController.instance,
+      builder: (context, _) {
+        final lang = LangController.instance.lang;
+        return MaterialApp(
+          // A new key forces every screen to redraw in the new language.
+          key: ValueKey(lang),
+          title: 'Form Saathi',
+          debugShowCheckedModeBanner: false,
+          theme: buildTheme(),
+          home: lang == null ? const LanguageScreen() : const RootShell(),
+        );
+      },
     );
   }
 }
@@ -55,11 +68,11 @@ class _RootShellState extends State<RootShell> {
         onDestinationSelected: _openTab,
         backgroundColor: Colors.white,
         indicatorColor: AppColors.marigold.withValues(alpha: 0.35),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.photo_camera_outlined), selectedIcon: Icon(Icons.photo_camera), label: 'Photo'),
-          NavigationDestination(icon: Icon(Icons.notifications_outlined), selectedIcon: Icon(Icons.notifications), label: 'Reminders'),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: 'Guides'),
+        destinations: [
+          NavigationDestination(icon: const Icon(Icons.home_outlined), selectedIcon: const Icon(Icons.home), label: tr(S.tabHome)),
+          NavigationDestination(icon: const Icon(Icons.photo_camera_outlined), selectedIcon: const Icon(Icons.photo_camera), label: tr(S.tabPhoto)),
+          NavigationDestination(icon: const Icon(Icons.notifications_outlined), selectedIcon: const Icon(Icons.notifications), label: tr(S.tabReminders)),
+          NavigationDestination(icon: const Icon(Icons.menu_book_outlined), selectedIcon: const Icon(Icons.menu_book), label: tr(S.tabGuides)),
         ],
       ),
     );

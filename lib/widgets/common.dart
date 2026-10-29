@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../l10n/lang.dart';
+import '../l10n/strings.dart';
 import '../theme.dart';
 
 /// Shown on every screen that gives guidance. Required so users (and
@@ -10,10 +12,9 @@ class Disclaimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Text(
-      'Form Saathi is not a government app and is not affiliated with any '
-      'government body. Always confirm on the official website.',
-      style: TextStyle(fontSize: 12, height: 1.4, color: AppColors.muted),
+    return Text(
+      tr(S.disclaimer),
+      style: const TextStyle(fontSize: 12, height: 1.4, color: AppColors.muted),
     );
   }
 }
@@ -33,11 +34,43 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-          color: background, borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(999)),
+      child: Text(text, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: foreground)),
+    );
+  }
+}
+
+/// Small grey uppercase heading above a group.
+class SectionLabel extends StatelessWidget {
+  final String text;
+  const SectionLabel(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(text,
-          style: TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700, color: foreground)),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.muted, letterSpacing: 0.6)),
+    );
+  }
+}
+
+/// Round "हिं / EN" button that switches the app language.
+class LanguageToggle extends StatelessWidget {
+  const LanguageToggle({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final hi = LangController.instance.isHindi;
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(64, 44),
+        backgroundColor: Colors.white,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+      ),
+      onPressed: () => LangController.instance.set(hi ? AppLang.en : AppLang.hi),
+      child: Text(hi ? 'English' : 'हिंदी', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -51,9 +84,7 @@ Future<void> openLink(BuildContext context, String url) async {
     ok = false;
   }
   if (!ok && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Could not open $url')),
-    );
+    showMessage(context, '${tr(S.couldNotOpen)}: $url');
   }
 }
 

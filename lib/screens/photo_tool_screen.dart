@@ -10,6 +10,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../models/exam_preset.dart';
 import '../services/image_processor.dart';
+import '../l10n/lang.dart';
+import '../l10n/strings.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -67,7 +69,7 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
       _original = await file.readAsBytes();
       await _reprocess();
     } catch (e) {
-      if (mounted) showMessage(context, 'Could not open the photo. Please try again.');
+      if (mounted) showMessage(context, tr(S.openFailed));
     }
   }
 
@@ -114,9 +116,9 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
       }
       final file = await _writeTempFile(bytes);
       await Gal.putImage(file.path, album: 'Form Saathi');
-      if (mounted) showMessage(context, 'Saved to Gallery › Form Saathi');
+      if (mounted) showMessage(context, tr(S.savedGallery));
     } catch (e) {
-      if (mounted) showMessage(context, 'Could not save. Allow photo access in Settings.');
+      if (mounted) showMessage(context, tr(S.saveFailed));
     }
   }
 
@@ -134,21 +136,21 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
-        const Text('Photo & Signature', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-        const Text('फोटो और साइन सही साइज़ में', style: TextStyle(fontSize: 14, color: AppColors.muted)),
+        Text(tr(S.photoTitle), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+        Text(tr(S.photoSub), style: const TextStyle(fontSize: 14, color: AppColors.muted)),
         const SizedBox(height: 14),
         SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('Photo · फोटो'), icon: Icon(Icons.person_outline)),
-            ButtonSegment(value: true, label: Text('Sign · साइन'), icon: Icon(Icons.draw_outlined)),
+          segments: [
+            ButtonSegment(value: false, label: Text(tr(S.segPhoto)), icon: const Icon(Icons.person_outline)),
+            ButtonSegment(value: true, label: Text(tr(S.segSign)), icon: const Icon(Icons.draw_outlined)),
           ],
           selected: {_isSignature},
           onSelectionChanged: (s) => _selectTab(s.first),
           showSelectedIcon: false,
         ),
         const SizedBox(height: 16),
-        const Text('1. Choose your form · फॉर्म चुनें',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.muted)),
+        Text(tr(S.chooseForm),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.muted)),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -156,7 +158,7 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
           children: [
             for (final p in examPresets)
               ChoiceChip(
-                label: Text(p.name),
+                label: Text(tr(p.name)),
                 selected: p.id == _preset.id,
                 onSelected: (_) => _selectPreset(p),
                 selectedColor: AppColors.ink,
@@ -177,10 +179,7 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
           },
         ),
         const SizedBox(height: 6),
-        const Text(
-          'These are common sizes. Always match the numbers in your official notification. You can edit them above.',
-          style: TextStyle(fontSize: 12, color: AppColors.muted),
-        ),
+        Text(tr(S.sizesNote), style: const TextStyle(fontSize: 12, color: AppColors.muted)),
         if (!_isSignature) ...[
           const SizedBox(height: 12),
           _StampOptions(
@@ -199,15 +198,15 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
           ),
         ],
         const SizedBox(height: 16),
-        const Text('2. Add your photo · फोटो डालें',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.muted)),
+        Text(tr(S.addPhoto),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.muted)),
         const SizedBox(height: 8),
         Row(children: [
           Expanded(
             child: OutlinedButton.icon(
               onPressed: _busy ? null : () => _pick(ImageSource.gallery),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('Gallery'),
+              label: Text(tr(S.gallery)),
             ),
           ),
           const SizedBox(width: 10),
@@ -215,31 +214,31 @@ class _PhotoToolScreenState extends State<PhotoToolScreen> {
             child: OutlinedButton.icon(
               onPressed: _busy ? null : () => _pick(ImageSource.camera),
               icon: const Icon(Icons.photo_camera_outlined),
-              label: const Text('Camera'),
+              label: Text(tr(S.camera)),
             ),
           ),
         ]),
         const SizedBox(height: 16),
-        _ResultCard(result: _result, busy: _busy, spec: _spec, examName: _preset.name),
+        _ResultCard(result: _result, busy: _busy, spec: _spec, examName: tr(_preset.name)),
         if (_result?.bytes != null) ...[
           const SizedBox(height: 14),
           FilledButton.icon(
             onPressed: _busy ? null : _saveToGallery,
             icon: const Icon(Icons.download),
-            label: const Text('Save to Gallery'),
+            label: Text(tr(S.saveGallery)),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: _busy ? null : _share,
             icon: const Icon(Icons.share_outlined),
-            label: const Text('Share (WhatsApp, Drive…)'),
+            label: Text(tr(S.share)),
           ),
         ],
         const SizedBox(height: 14),
-        const Row(children: [
-          Icon(Icons.lock_outline, size: 18, color: AppColors.ink),
-          SizedBox(width: 8),
-          Expanded(child: Text('Stays on your phone. Nothing is uploaded.', style: TextStyle(fontSize: 14))),
+        Row(children: [
+          const Icon(Icons.lock_outline, size: 18, color: AppColors.ink),
+          const SizedBox(width: 8),
+          Expanded(child: Text(tr(S.staysOnPhone), style: const TextStyle(fontSize: 14))),
         ]),
       ],
     );
@@ -279,13 +278,13 @@ class _SpecEditor extends StatelessWidget {
     }
 
     return Row(children: [
-      box('Width px', spec.width, (v) => spec.copyWith(width: v.clamp(20, 3000).toInt())),
+      box(tr(S.widthPx), spec.width, (v) => spec.copyWith(width: v.clamp(20, 3000).toInt())),
       const SizedBox(width: 6),
-      box('Height px', spec.height, (v) => spec.copyWith(height: v.clamp(20, 3000).toInt())),
+      box(tr(S.heightPx), spec.height, (v) => spec.copyWith(height: v.clamp(20, 3000).toInt())),
       const SizedBox(width: 6),
-      box('Min KB', spec.minKb, (v) => spec.copyWith(minKb: v < spec.maxKb ? v : spec.minKb)),
+      box(tr(S.minKb), spec.minKb, (v) => spec.copyWith(minKb: v < spec.maxKb ? v : spec.minKb)),
       const SizedBox(width: 6),
-      box('Max KB', spec.maxKb, (v) => spec.copyWith(maxKb: v > spec.minKb ? v : spec.maxKb)),
+      box(tr(S.maxKb), spec.maxKb, (v) => spec.copyWith(maxKb: v > spec.minKb ? v : spec.maxKb)),
     ]);
   }
 }
@@ -315,8 +314,8 @@ class _StampOptions extends StatelessWidget {
         child: Column(children: [
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Name & date on photo', style: TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: const Text('Some forms (like UPSC) ask for this'),
+            title: Text(tr(S.nameDateTitle), style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(tr(S.nameDateSub)),
             value: enabled,
             onChanged: onToggle,
           ),
@@ -326,7 +325,7 @@ class _StampOptions extends StatelessWidget {
                 child: TextField(
                   controller: nameCtrl,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(labelText: 'Your name', isDense: true),
+                  decoration: InputDecoration(labelText: tr(S.yourName), isDense: true),
                   onSubmitted: (_) => onNameDone(),
                   onEditingComplete: onNameDone,
                 ),
@@ -358,6 +357,20 @@ class _ResultCard extends StatelessWidget {
   final String examName;
 
   const _ResultCard({required this.result, required this.busy, required this.spec, required this.examName});
+
+  String _resultText(ProcessResult r) {
+    switch (r.error) {
+      case ProcessError.unreadable:
+        return tr(S.readFailed);
+      case ProcessError.tooBig:
+        return tr(S.tooBig);
+      case null:
+        final range = '${spec.minKb}–${spec.maxKb} KB';
+        return r.fits
+            ? '${tr(S.yourFile)}: ${r.sizeKb} KB · ${tr(S.fits)}'
+            : '${r.sizeKb} KB · ${tr(S.outside)} $range';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -393,7 +406,7 @@ class _ResultCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$examName needs', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
+                Text('$examName ${tr(S.needs)}', style: const TextStyle(fontSize: 13, color: AppColors.muted)),
                 Text('${spec.width} × ${spec.height} px',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 Text('${spec.minKb} – ${spec.maxKb} KB',
@@ -401,12 +414,12 @@ class _ResultCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 if (r != null)
                   Pill(
-                    r.fits ? 'Your file: ${r.message}' : r.message,
+                    _resultText(r),
                     background: r.fits ? AppColors.greenBg : AppColors.orangeBg,
                     foreground: r.fits ? AppColors.greenText : AppColors.orangeText,
                   )
                 else
-                  const Text('Add a photo to start', style: TextStyle(color: AppColors.muted)),
+                  Text(tr(S.addPhotoToStart), style: const TextStyle(color: AppColors.muted)),
               ],
             ),
           ),

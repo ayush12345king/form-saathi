@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../models/doc_item.dart';
 import '../services/storage.dart';
+import '../l10n/lang.dart';
+import '../l10n/strings.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
@@ -17,7 +19,7 @@ class RemindersScreen extends StatelessWidget {
         foregroundColor: Colors.white,
         onPressed: () => showDocEditor(context),
         icon: const Icon(Icons.add),
-        label: const Text('Add document'),
+        label: Text(tr(S.addDocument)),
       ),
       body: ListenableBuilder(
         listenable: DocStore.instance,
@@ -30,25 +32,22 @@ class RemindersScreen extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
             children: [
-              const Text('My Documents', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
-              const Text('मेरे कागज़ · expiry reminders', style: TextStyle(fontSize: 14, color: AppColors.muted)),
+              Text(tr(S.myDocs), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+              Text(tr(S.myDocsSub), style: const TextStyle(fontSize: 14, color: AppColors.muted)),
               const SizedBox(height: 14),
               Row(children: [
-                _Count('$urgent', 'Urgent (≤7 days)', AppColors.orangeBg, AppColors.orangeText),
+                _Count('$urgent', tr(S.urgent), AppColors.orangeBg, AppColors.orangeText),
                 const SizedBox(width: 8),
-                _Count('$soon', 'This month', AppColors.amberBg, AppColors.amberText),
+                _Count('$soon', tr(S.thisMonth), AppColors.amberBg, AppColors.amberText),
                 const SizedBox(width: 8),
-                _Count('$ok', 'All good', AppColors.greenBg, AppColors.greenText),
+                _Count('$ok', tr(S.allGood), AppColors.greenBg, AppColors.greenText),
               ]),
               const SizedBox(height: 14),
               if (docs.isEmpty)
-                const Card(
+                Card(
                   child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text(
-                      'No documents yet.\nTap "Add document" and add your DL, PUC, insurance or passport expiry date.',
-                      style: TextStyle(fontSize: 15, height: 1.4),
-                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Text(tr(S.noDocs), style: const TextStyle(fontSize: 15, height: 1.4)),
                   ),
                 ),
               for (final d in docs)
@@ -57,11 +56,7 @@ class RemindersScreen extends StatelessWidget {
                   child: _DocTile(doc: d),
                 ),
               const SizedBox(height: 6),
-              const Text(
-                'Tip: tap ⋮ › "Add to Calendar" on a document. Your phone calendar will then '
-                'remind you even if this app is closed.',
-                style: TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4),
-              ),
+              Text(tr(S.calendarTip), style: const TextStyle(fontSize: 13, color: AppColors.muted, height: 1.4)),
             ],
           );
         },
@@ -105,7 +100,7 @@ class _DocTile extends StatelessWidget {
     };
     final detail = [
       if (doc.label.isNotEmpty) doc.label,
-      '${doc.daysLeft < 0 ? 'expired' : 'expires'} ${formatDate(doc.expiry)}',
+      '${doc.daysLeft < 0 ? tr(S.expiredWord) : tr(S.expires)} ${formatDate(doc.expiry)}',
     ].join(' · ');
 
     return Card(
@@ -119,13 +114,13 @@ class _DocTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(doc.type, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(doc.typeName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 Text(detail, style: const TextStyle(fontSize: 13, color: AppColors.muted)),
               ]),
             ),
             Pill(formatDaysLeft(doc.daysLeft), background: bg, foreground: fg),
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: tr(S.more),
               onSelected: (v) async {
                 if (v == 'calendar') {
                   await openLink(context, calendarLink(doc));
@@ -133,9 +128,9 @@ class _DocTile extends StatelessWidget {
                   await DocStore.instance.remove(doc.id);
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'calendar', child: Text('Add to Calendar')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'calendar', child: Text(tr(S.addToCalendar))),
+                PopupMenuItem(value: 'delete', child: Text(tr(S.delete))),
               ],
             ),
           ]),
@@ -203,7 +198,7 @@ class _DocEditorState extends State<_DocEditor> {
       initialDate: _expiry ?? now.add(const Duration(days: 30)),
       firstDate: DateTime(now.year - 2),
       lastDate: DateTime(now.year + 30),
-      helpText: 'Expiry date',
+      helpText: tr(S.expiryDate),
     );
     if (picked != null) setState(() => _expiry = picked);
   }
@@ -211,7 +206,7 @@ class _DocEditorState extends State<_DocEditor> {
   Future<void> _save() async {
     final expiry = _expiry;
     if (expiry == null) {
-      showMessage(context, 'Please choose the expiry date');
+      showMessage(context, tr(S.pleaseExpiry));
       return;
     }
     await DocStore.instance.upsert(DocItem(
@@ -231,33 +226,33 @@ class _DocEditorState extends State<_DocEditor> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.existing == null ? 'Add document' : 'Edit document',
+          Text(widget.existing == null ? tr(S.addDocument) : tr(S.editDocument),
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
             value: docTypes.contains(_type) ? _type : docTypes.last,
-            decoration: const InputDecoration(labelText: 'Document', border: OutlineInputBorder()),
-            items: [for (final t in docTypes) DropdownMenuItem(value: t, child: Text(t))],
+            decoration: InputDecoration(labelText: tr(S.docField), border: const OutlineInputBorder()),
+            items: [for (final t in docTypes) DropdownMenuItem(value: t, child: Text(docTypeName(t)))],
             onChanged: (v) => setState(() => _type = v ?? _type),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _labelCtrl,
             textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(
-              labelText: 'Note (optional)',
-              hintText: 'e.g. HR06AB1234 or Papa\'s DL',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: tr(S.noteField),
+              hintText: tr(S.noteHint),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: _pickDate,
             icon: const Icon(Icons.event),
-            label: Text(_expiry == null ? 'Choose expiry date' : 'Expires ${formatDate(_expiry!)}'),
+            label: Text(_expiry == null ? tr(S.chooseExpiry) : '${tr(S.expires)}: ${formatDate(_expiry!)}'),
           ),
           const SizedBox(height: 16),
-          FilledButton(onPressed: _save, child: const Text('Save')),
+          FilledButton(onPressed: _save, child: Text(tr(S.save))),
         ],
       ),
     );
