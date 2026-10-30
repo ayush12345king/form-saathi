@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/doc_item.dart';
+import '../services/notifications.dart';
 import '../services/storage.dart';
 import '../l10n/lang.dart';
 import '../l10n/strings.dart';
@@ -215,6 +216,8 @@ class _DocEditorState extends State<_DocEditor> {
       label: _labelCtrl.text.trim(),
       expiry: expiry,
     ));
+    // Ask once for permission to show expiry notifications (Android 13+).
+    await ExpiryNotifications.instance.requestPermission();
     if (mounted) Navigator.of(context).pop();
   }
 

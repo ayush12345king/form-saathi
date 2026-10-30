@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'screens/language_screen.dart';
 import 'screens/photo_tool_screen.dart';
 import 'screens/reminders_screen.dart';
+import 'services/notifications.dart';
 import 'services/storage.dart';
 import 'theme.dart';
 
@@ -14,6 +15,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LangController.instance.load(); // saved language (or none yet)
   await DocStore.instance.load(); // saved documents
+
+  // Phone notifications before documents expire. Re-planned whenever a
+  // document or the language changes.
+  await ExpiryNotifications.instance.init();
+  void reschedule() => ExpiryNotifications.instance
+      .rescheduleAll(DocStore.instance.docs, hindi: LangController.instance.isHindi);
+  DocStore.instance.addListener(reschedule);
+  LangController.instance.addListener(reschedule);
+  reschedule();
+
   runApp(const FormSaathiApp());
 }
 

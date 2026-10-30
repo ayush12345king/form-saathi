@@ -84,8 +84,8 @@ class S {
       'No documents yet.\nTap "Add document" and add your DL, PUC, insurance or passport expiry date.',
       'अभी कोई दस्तावेज़ नहीं है।\n"दस्तावेज़ जोड़ें" दबाएं और अपने DL, PUC, बीमा या पासपोर्ट की समाप्ति तारीख डालें।');
   static const calendarTip = L(
-      'Tip: tap ⋮ › "Add to Calendar" on a document. Your phone calendar will then remind you even if this app is closed.',
-      'सुझाव: किसी दस्तावेज़ पर ⋮ › "कैलेंडर में जोड़ें" दबाएं। ऐप बंद होने पर भी फोन का कैलेंडर याद दिलाएगा।');
+      'You’ll get a notification 30, 7 and 1 day before each expiry. For an extra reminder, tap ⋮ › "Add to Calendar".',
+      'हर समाप्ति से 30, 7 और 1 दिन पहले नोटिफिकेशन आएगा। एक और रिमाइंडर के लिए ⋮ › "कैलेंडर में जोड़ें" दबाएं।');
   static const addToCalendar = L('Add to Calendar', 'कैलेंडर में जोड़ें');
   static const delete = L('Delete', 'हटाएं');
   static const more = L('More', 'और');

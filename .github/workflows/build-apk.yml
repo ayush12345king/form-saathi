@@ -11,7 +11,15 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
+    env:
+      # Optional. When these 4 secrets are added in GitHub (Settings ›
+      # Secrets and variables › Actions), builds are signed with your
+      # Play Store upload key. Without them, the debug key is used.
+      KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
 
@@ -28,9 +36,27 @@ jobs:
       # The repo only holds our own files. This adds the standard Android
       # project files Flutter needs, without overwriting ours.
       - name: Add missing Flutter platform files
-        run: flutter create --org com.formsaathi --project-name form_saathi --platforms android .
+        run: |
+          flutter create --org com.formsaathi --project-name form_saathi --platforms android .
+          python3 tool/patch_android.py
+
+      - name: Set up release signing (if secrets exist)
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+            printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
+              "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > android/key.properties
+            echo "SIGNED=upload" >> "$GITHUB_ENV"
+            echo "Release signing: upload key"
+          else
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+            echo "::warning title=signing::No signing secrets set. Using the debug key (fine for testing, not for the Play Store)."
+          fi
 
       - run: flutter pub get
+
+      - name: App icon
+        run: dart run flutter_launcher_icons
 
       # Errors are also printed as GitHub annotations so they can be read
       # from the API without downloading the full log.
@@ -49,23 +75,38 @@ jobs:
             exit 1
           }
 
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Rename APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk FormSaathi.apk
+      - name: Build APKs (one per phone type) and Play Store bundle
+        run: |
+          set -o pipefail
+          report() {
+            grep -E "^e: |error:|What went wrong|> |Execution failed|Could not|Unresolved|FAILURE" build.txt | head -40 | while read -r line; do echo "::error title=build::$line"; done
+            exit 1
+          }
+          flutter build apk --release --split-per-abi 2>&1 | tee build.txt || report
+          flutter build appbundle --release 2>&1 | tee build.txt || report
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk out/FormSaathi.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk out/FormSaathi-old-phones.apk
+          if [ "$SIGNED" = "upload" ]; then
+            cp build/app/outputs/bundle/release/app-release.aab out/FormSaathi-playstore.aab
+          fi
+          ls -la out
 
       - uses: actions/upload-artifact@v4
         with:
-          name: FormSaathi-apk
-          path: FormSaathi.apk
+          name: FormSaathi
+          path: out/
 
-      # Puts the APK on the repo's Releases page so it can be downloaded
+      # Puts the files on the repo's Releases page so they can be downloaded
       # straight onto a phone.
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Form Saathi test build ${{ github.run_number }}
-          body: Test build. Download FormSaathi.apk on your Android phone and tap it to install.
-          files: FormSaathi.apk
+          name: Form Saathi ${{ github.run_number }} (${{ env.SIGNED }} signed)
+          body: |
+            Test build.
+            - FormSaathi.apk: for almost all phones (64-bit).
+            - FormSaathi-old-phones.apk: only if the first one says "app not installed" on an old phone.
+            - FormSaathi-playstore.aab (only when signed with the upload key): upload this to Google Play Console.
+          files: out/*
           prerelease: true

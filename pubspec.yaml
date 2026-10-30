@@ -1,7 +1,7 @@
 name: form_saathi
 description: "Form Saathi - get your government paperwork right the first time."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
@@ -16,11 +16,22 @@ dependencies:
   gal: ^2.3.0                 # saves images to the phone gallery
   share_plus: ^10.1.4         # share sheet (WhatsApp, Drive, etc.)
   url_launcher: ^6.3.1        # opens official websites and Google Calendar
+  flutter_local_notifications: 17.2.4  # expiry notifications (API pinned)
+  timezone: ^0.9.4            # schedule notifications in Indian time
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/icon/icon.png
+  adaptive_icon_background: "#1B2340"
+  adaptive_icon_foreground: assets/icon/icon_foreground.png
+  min_sdk_android: 21
 
 flutter:
   uses-material-design: true
