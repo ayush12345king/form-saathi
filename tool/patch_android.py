@@ -22,8 +22,8 @@ SIGNING_KTS = """    signingConfigs {
         create("release") {
             val keyFile = rootProject.file("key.properties")
             if (keyFile.exists()) {
-                val p = java.util.Properties()
-                p.load(java.io.FileInputStream(keyFile))
+                val p = Properties()
+                p.load(FileInputStream(keyFile))
                 keyAlias = p.getProperty("keyAlias")
                 keyPassword = p.getProperty("keyPassword")
                 storeFile = file(p.getProperty("storeFile"))
@@ -35,6 +35,7 @@ SIGNING_KTS = """    signingConfigs {
     buildTypes {"""
 
 if path == kts:
+    src = "import java.io.FileInputStream\nimport java.util.Properties\n\n" + src
     src = src.replace("compileOptions {", "compileOptions {\n        isCoreLibraryDesugaringEnabled = true", 1)
     src = src.replace("    buildTypes {", SIGNING_KTS, 1)
     src = src.replace(
